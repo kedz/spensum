@@ -41,7 +41,8 @@ python python_main/evaluate_rouge.py \
     --system-summaries \
         $DUC_SDS_SUMMARY_DIR/train/rand3 \
         $DUC_SDS_SUMMARY_DIR/train/lead3 \
-    --system-names rand3 lead3 \
+        $DUC_SDS_SUMMARY_DIR/train/oracle \
+    --system-names rand3 lead3 oracle \
     --reference-summaries $DUC_SDS_SUMMARY_DIR/train/human_abstract \
     --rouge-dir $ROUGE_PATH
 
@@ -50,7 +51,8 @@ python python_main/evaluate_rouge.py \
     --system-summaries \
         $DUC_SDS_SUMMARY_DIR/valid/rand3 \
         $DUC_SDS_SUMMARY_DIR/valid/lead3 \
-    --system-names rand3 lead3 \
+        $DUC_SDS_SUMMARY_DIR/valid/oracle \
+    --system-names rand3 lead3 oracle \
     --reference-summaries $DUC_SDS_SUMMARY_DIR/valid/human_abstract \
     --rouge-dir $ROUGE_PATH
 
@@ -59,6 +61,7 @@ python python_main/evaluate_rouge.py \
     --system-summaries \
         $DUC_SDS_SUMMARY_DIR/test/rand3 \
         $DUC_SDS_SUMMARY_DIR/test/lead3 \
-    --system-names rand3 lead3 \
+        $DUC_SDS_SUMMARY_DIR/test/oracle \
+    --system-names rand3 lead3 oracle \
     --reference-summaries $DUC_SDS_SUMMARY_DIR/test/human_abstract \
     --rouge-dir $ROUGE_PATH
