@@ -14,7 +14,7 @@ python python_main/predict_labels.py \
     --predictor $DUC_SDS_PRED_DIR/salience.bin \
     --output-path $DUC_SDS_LABEL_DIR/salience.train.tsv
 
-echo "Predicting labels with Salience Module on training dataset ..."
+echo "Predicting labels with Salience Module on validation dataset ..."
 python python_main/predict_labels.py \
     --data $DUC_SDS_DATA_DIR/duc.sds.valid.json \
     --predictor $DUC_SDS_PRED_DIR/salience.bin \
