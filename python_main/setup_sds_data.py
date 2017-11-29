@@ -139,7 +139,23 @@ def write_lead3_labels(data, path):
             line = "{}\t{}\n".format(id, labels)
             fp.write(line)
 
+def write_oracle_summaries(data, path):
+    if not os.path.exists(path):
+        os.makedirs(path)
    
+    for example in data:
+        id = "{}.{}".format(
+            example[0]["docset_id"].lower(), 
+            example[0]["doc_id"].lower())
+        summary_texts = []
+        for sent in example:
+            if sent["label"] == 1:
+                summary_texts.append(sent["text"])
+
+        with open(os.path.join(path, "{}.spl".format(id)), "w") as fp:
+            fp.write("\n".join(summary_texts))
+
+  
 
 def main():
     parser = argparse.ArgumentParser(
@@ -269,6 +285,9 @@ def main():
     write_gold_summaries(
         train_summaries, 
         os.path.join(args.summary_dir, "train", "human_abstract"))
+    write_oracle_summaries(
+        train_data, 
+        os.path.join(args.summary_dir, "train", "oracle"))
 
     write_random3_summaries(
         valid_data, os.path.join(args.summary_dir, "valid", "rand3"))
@@ -277,6 +296,9 @@ def main():
     write_gold_summaries(
         valid_summaries, 
         os.path.join(args.summary_dir, "valid", "human_abstract"))
+    write_oracle_summaries(
+        valid_data, 
+        os.path.join(args.summary_dir, "valid", "oracle"))
 
     write_random3_summaries(
         test_data, os.path.join(args.summary_dir, "test", "rand3"))
@@ -285,6 +307,12 @@ def main():
     write_gold_summaries(
         duc2002_summaries, 
         os.path.join(args.summary_dir, "test", "human_abstract"))
+    write_oracle_summaries(
+        test_data, 
+        os.path.join(args.summary_dir, "test", "oracle"))
+
+
+
 
 if __name__ == "__main__":
     main()
