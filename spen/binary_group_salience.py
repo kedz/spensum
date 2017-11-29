@@ -10,9 +10,6 @@ class BinaryGroupSalience(nn.Module):
                  mask_value=-1):
         super(BinaryGroupSalience, self).__init__()
 
-       
-
-
         self.mask_value = mask_value
         self.interaction_mode_ = interaction_mode
        
