@@ -6,6 +6,13 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 
 class Coverage(nn.Module):
+    ''' 
+    Coverage score of sentence i is y_i = sigmoid(u * (x_i^T W x_d) + b)
+    where x_i is the column vector corresponding to the sentence embedding
+    for sentence i, x_d is the average of all sentence emeddings from the input
+    instance, W is an embedding size by embedding size matrix of learned 
+    parameters, and u and b are learned scalar parameters.
+    '''
     def __init__(self, input_size, learn_params=True, mask_value=-1,
                  group_dropout=0.0):
         super(Coverage, self).__init__()
@@ -16,7 +23,9 @@ class Coverage(nn.Module):
         self.group_layer_norm_ = LayerNorm(input_size)
         self.weights = nn.Parameter(torch.FloatTensor(input_size, input_size))
         self.weights.data.normal_(0, 0.00001)
-        self.mlp_ = MultiLayerPerceptron(1, 1, output_activation="sigmoid")
+        
+        self.sigmoid_layer_ = MultiLayerPerceptron(
+            1, 1, output_activation="sigmoid")
         self.group_dropout_ = group_dropout
         
     @property
@@ -70,7 +79,7 @@ class Coverage(nn.Module):
         groups_flat = groups.view(batch_size * group_len, emb_size, 1)
         inputs_flat_proj = inputs_flat.bmm(weights)
         coverage_flat = inputs_flat_proj.bmm(groups_flat).squeeze(2)
-        squashed_coverage = self.mlp_(coverage_flat).view(
+        squashed_coverage = self.sigmoid_layer_(coverage_flat).view(
             batch_size, group_len)
         squashed_coverage.data.masked_fill_(mask, 0)
         return squashed_coverage 
