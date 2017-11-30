@@ -36,16 +36,16 @@ python python_main/pretrain_novelty_module.py \
 python python_main/pretrain_position_module.py \
     --train $DUC_SDS_DATA_DIR/duc.sds.train.json \
     --valid $DUC_SDS_DATA_DIR/duc.sds.valid.json \
-    --save-model $MODULE_PATH \
-    --save-predictor $PREDICTOR_PATH 
+    --save-model $DUC_SDS_MODEL_DIR/position.bin \
+    --save-predictor $DUC_SDS_PRED_DIR/position.bin
 
  ### Positional Salience Module Pretrain ###
 
 python python_main/pretrain_positional_salience_module.py \
     --train $DUC_SDS_DATA_DIR/duc.sds.train.json \
     --valid $DUC_SDS_DATA_DIR/duc.sds.valid.json \
-    --save-model $MODULE_PATH \
-    --save-predictor $PREDICTOR_PATH 
+    --save-model $DUC_SDS_MODEL_DIR/psalience.bin \
+    --save-predictor $DUC_SDS_PRED_DIR/psalience.bin 
 
 # ### Joint Module Pretrain ###
 #
