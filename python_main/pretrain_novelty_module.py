@@ -29,6 +29,8 @@ def main():
 
     parser.add_argument(
         "--salience-module", type=str, required=True)
+    parser.add_argument(
+        "--update-salience-module", action="store_true", default=False)
     
 #    parser.add_argument(
 #        "--hidden-layer-dropout", default=.05, type=float, required=False)
@@ -55,7 +57,8 @@ def main():
 
     model = spen.Novelty(
         args.embedding_size,
-        salience_module)
+        salience_module,
+        freeze_salience_module=not args.update_salience_module)
         #hidden_sizes=args.hidden_layer_sizes,
         #hidden_layer_activations=args.hidden_layer_activations,
         #hidden_layer_dropout=args.hidden_layer_dropout)

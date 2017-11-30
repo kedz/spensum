@@ -4,8 +4,10 @@ import torch
 import torch.nn as nn
 from torch.autograd import Variable
 
+
 class Novelty(nn.Module):
-    def __init__(self, input_size, salience_model, mask_value=-1):
+    def __init__(self, input_size, salience_model, 
+                 freeze_salience_module=False, mask_value=-1):
         super(Novelty, self).__init__()
         self.input_size_ = input_size
         self.salience_model_ = salience_model
@@ -17,6 +19,25 @@ class Novelty(nn.Module):
             torch.diag(torch.FloatTensor(input_size).fill_(.001)).float())
         self.sigmoid_layer = MultiLayerPerceptron(
             1, 1, output_activation="sigmoid")
+
+        self.freeze_salience_module_ = freeze_salience_module
+
+
+    def parameters(self):
+        if not self.freeze_salience_module:
+            for param in self.salience_model.parameters():
+                yield param
+        for param in self.input_layer_norm_.parameters():
+            yield param
+        for param in self.group_layer_norm_.parameters():
+            yield param
+        yield self.weights
+        for param in self.sigmoid_layer.parameters():
+            yield param
+
+    @property
+    def freeze_salience_module(self):
+        return self.freeze_salience_module_
 
     @property
     def mask_value(self):
