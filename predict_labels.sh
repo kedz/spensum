@@ -67,3 +67,23 @@ python python_main/predict_labels.py \
     --data $DUC_SDS_DATA_DIR/duc.sds.test.json \
     --predictor $DUC_SDS_PRED_DIR/novelty.bin \
     --output-path $DUC_SDS_LABEL_DIR/novelty.test.tsv
+
+ ### Position Module predictions ###
+
+echo "Predicting labels with Position Module on training dataset ..."
+python python_main/predict_labels.py \
+    --data $DUC_SDS_DATA_DIR/duc.sds.train.json \
+    --predictor $DUC_SDS_PRED_DIR/position.bin \
+    --output-path $DUC_SDS_LABEL_DIR/position.train.tsv
+
+echo "Predicting labels with Position Module on validation dataset ..."
+python python_main/predict_labels.py \
+    --data $DUC_SDS_DATA_DIR/duc.sds.valid.json \
+    --predictor $DUC_SDS_PRED_DIR/position.bin \
+    --output-path $DUC_SDS_LABEL_DIR/position.valid.tsv
+
+echo "Predicting labels with Position Module on test dataset ..."
+python python_main/predict_labels.py \
+    --data $DUC_SDS_DATA_DIR/duc.sds.test.json \
+    --predictor $DUC_SDS_PRED_DIR/position.bin \
+    --output-path $DUC_SDS_LABEL_DIR/position.test.tsv

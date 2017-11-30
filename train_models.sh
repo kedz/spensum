@@ -30,3 +30,13 @@ python python_main/pretrain_novelty_module.py \
     --salience-module $DUC_SDS_MODEL_DIR/salience.bin \
     --save-model $DUC_SDS_MODEL_DIR/novelty.bin \
     --save-predictor $DUC_SDS_PRED_DIR/novelty.bin
+
+ ### Position Module Pretrain ###
+
+python python_main/pretrain_position_module.py \
+    --train $DUC_SDS_DATA_DIR/duc.sds.train.json \
+    --valid $DUC_SDS_DATA_DIR/duc.sds.valid.json \
+    --save-model $MODULE_PATH \
+    --save-predictor $PREDICTOR_PATH 
+
+

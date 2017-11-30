@@ -67,3 +67,23 @@ python python_main/generate_summaries.py \
     --data $DUC_SDS_DATA_DIR/duc.sds.test.json \
     --predictor $DUC_SDS_PRED_DIR/novelty.bin \
     --output-dir $DUC_SDS_SUMMARY_DIR/test/novelty 
+
+ ### Position Module generation ###
+
+echo "Generating Novelty Module summaries on training dataset ..."
+python python_main/generate_summaries.py \
+    --data $DUC_SDS_DATA_DIR/duc.sds.train.json \
+    --predictor $DUC_SDS_PRED_DIR/position.bin \
+    --output-dir $DUC_SDS_SUMMARY_DIR/train/position
+
+echo "Generating Position Module summaries on validation dataset ..."
+python python_main/generate_summaries.py \
+    --data $DUC_SDS_DATA_DIR/duc.sds.valid.json \
+    --predictor $DUC_SDS_PRED_DIR/position.bin \
+    --output-dir $DUC_SDS_SUMMARY_DIR/valid/position 
+
+echo "Generating Position Module summaries on test dataset ..."
+python python_main/generate_summaries.py \
+    --data $DUC_SDS_DATA_DIR/duc.sds.test.json \
+    --predictor $DUC_SDS_PRED_DIR/position.bin \
+    --output-dir $DUC_SDS_SUMMARY_DIR/test/position 
