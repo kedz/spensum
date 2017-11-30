@@ -1,42 +1,46 @@
 DUC SDS TRAIN Label PRF
 
-          precision    recall  f-measure
-rand       0.073682  0.479575   0.127739
-lead3      0.320513  0.293788   0.306569
-salience   0.173116  0.518187   0.259529
-coverage   0.201852  0.841634   0.325612
-novelty    0.262731  0.869054   0.403481
-position   0.143931  0.760492   0.242052
+           precision    recall  f-measure
+rand        0.073682  0.479575   0.127739
+lead3       0.320513  0.293788   0.306569
+salience    0.173116  0.518187   0.259529
+coverage    0.201852  0.841634   0.325612
+novelty     0.262731  0.869054   0.403481
+position    0.143931  0.760492   0.242052
+psalience   0.236170  0.807499   0.365455
 
 DUC SDS VALID Label PRF
 
-          precision    recall  f-measure
-rand       0.086521  0.477387   0.146492
-lead3      0.300546  0.276382   0.287958
-salience   0.171681  0.487437   0.253927
-coverage   0.159292  0.633166   0.254545
-novelty    0.177632  0.542714   0.267658
-position   0.163565  0.839196   0.273770
+           precision    recall  f-measure
+rand        0.086521  0.477387   0.146492
+lead3       0.300546  0.276382   0.287958
+salience    0.171681  0.487437   0.253927
+coverage    0.159292  0.633166   0.254545
+novelty     0.177632  0.542714   0.267658
+position    0.163565  0.839196   0.273770
+psalience   0.195021  0.708543   0.305857
 
 DUC SDS TRAIN Rouge
 
-          rouge 1  rouge 2  rouge lcs
-rand3     0.26722  0.07675    0.23469
-lead3     0.37750  0.17109    0.34050
-salience  0.40337  0.15194    0.35884
-coverage  0.43311  0.18450    0.39161
-novelty   0.44384  0.19573    0.40023
-position  0.43618  0.19354    0.39544
-oracle    0.49756  0.24852    0.44945
+           rouge 1  rouge 2  rouge lcs
+rand3      0.26722  0.07675    0.23469
+lead3      0.37750  0.17109    0.34050
+salience   0.40337  0.15194    0.35884
+coverage   0.43311  0.18450    0.39161
+novelty    0.44384  0.19573    0.40023
+position   0.43618  0.19354    0.39544
+psalience  0.45835  0.21293    0.41530
+oracle     0.49756  0.24852    0.44945
 
 DUC SDS VALID Rouge
 
-          rouge 1  rouge 2  rouge lcs
-rand3     0.28966  0.09406    0.25414
-lead3     0.38130  0.17965    0.34541
-salience  0.40585  0.15245    0.36163
-coverage  0.42057  0.16430    0.37801
-novelty   0.42898  0.17557    0.38338
-position  0.44137  0.20496    0.40262
-oracle    0.52029  0.27442    0.47335
+           rouge 1  rouge 2  rouge lcs
+rand3      0.28966  0.09406    0.25414
+lead3      0.38130  0.17965    0.34541
+salience   0.40585  0.15245    0.36163
+coverage   0.42057  0.16430    0.37801
+novelty    0.42898  0.17557    0.38338
+position   0.44137  0.20496    0.40262
+psalience  0.45532  0.20539    0.41137
+oracle     0.52029  0.27442    0.47335
 
