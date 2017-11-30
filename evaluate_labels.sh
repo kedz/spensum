@@ -14,7 +14,8 @@ python python_main/evaluate_label_prf.py \
         $DUC_SDS_LABEL_DIR/coverage.train.tsv \
         $DUC_SDS_LABEL_DIR/novelty.train.tsv \
         $DUC_SDS_LABEL_DIR/position.train.tsv \
-    --system-names rand lead3 salience coverage novelty position \
+        $DUC_SDS_LABEL_DIR/psalience.train.tsv \
+    --system-names rand lead3 salience coverage novelty position psalience \
     --reference-labels $DUC_SDS_LABEL_DIR/gold.train.tsv
 
 echo -e "DUC SDS VALID Label PRF\n"
@@ -26,5 +27,6 @@ python python_main/evaluate_label_prf.py \
         $DUC_SDS_LABEL_DIR/coverage.valid.tsv \
         $DUC_SDS_LABEL_DIR/novelty.valid.tsv \
         $DUC_SDS_LABEL_DIR/position.valid.tsv \
-    --system-names rand lead3 salience coverage novelty position \
+        $DUC_SDS_LABEL_DIR/psalience.valid.tsv \
+    --system-names rand lead3 salience coverage novelty position psalience \
     --reference-labels $DUC_SDS_LABEL_DIR/gold.valid.tsv

@@ -14,8 +14,10 @@ python python_main/evaluate_rouge.py \
         $DUC_SDS_SUMMARY_DIR/train/coverage \
         $DUC_SDS_SUMMARY_DIR/train/novelty \
         $DUC_SDS_SUMMARY_DIR/train/position \
+        $DUC_SDS_SUMMARY_DIR/train/psalience \
         $DUC_SDS_SUMMARY_DIR/train/oracle \
-    --system-names rand3 lead3 salience coverage novelty position oracle\
+    --system-names rand3 lead3 salience coverage novelty position psalience \
+        oracle \
     --reference-summaries $DUC_SDS_SUMMARY_DIR/train/human_abstract \
     --rouge-dir $ROUGE_PATH
 
@@ -28,7 +30,9 @@ python python_main/evaluate_rouge.py \
         $DUC_SDS_SUMMARY_DIR/valid/coverage \
         $DUC_SDS_SUMMARY_DIR/valid/novelty \
         $DUC_SDS_SUMMARY_DIR/valid/position \
+        $DUC_SDS_SUMMARY_DIR/valid/psalience \
         $DUC_SDS_SUMMARY_DIR/valid/oracle \
-    --system-names rand3 lead3 salience coverage novelty position oracle \
+    --system-names rand3 lead3 salience coverage novelty position psalience \
+        oracle \
     --reference-summaries $DUC_SDS_SUMMARY_DIR/valid/human_abstract \
     --rouge-dir $ROUGE_PATH

@@ -87,3 +87,21 @@ python python_main/predict_labels.py \
     --data $DUC_SDS_DATA_DIR/duc.sds.test.json \
     --predictor $DUC_SDS_PRED_DIR/position.bin \
     --output-path $DUC_SDS_LABEL_DIR/position.test.tsv
+
+echo "Predicting labels with Positional Salience Module on training dataset ..."
+python python_main/predict_labels.py \
+    --data $DUC_SDS_DATA_DIR/duc.sds.train.json \
+    --predictor $DUC_SDS_PRED_DIR/psalience.bin \
+    --output-path $DUC_SDS_LABEL_DIR/psalience.train.tsv
+
+echo "Predicting labels with Positional Salience Module on validation dataset ..."
+python python_main/predict_labels.py \
+    --data $DUC_SDS_DATA_DIR/duc.sds.valid.json \
+    --predictor $DUC_SDS_PRED_DIR/psalience.bin \
+    --output-path $DUC_SDS_LABEL_DIR/psalience.valid.tsv
+
+echo "Predicting labels with Positional Salience Module on test dataset ..."
+python python_main/predict_labels.py \
+    --data $DUC_SDS_DATA_DIR/duc.sds.test.json \
+    --predictor $DUC_SDS_PRED_DIR/psalience.bin \
+    --output-path $DUC_SDS_LABEL_DIR/psalience.test.tsv
