@@ -3,6 +3,7 @@ from ntp.modules import MultiLayerPerceptron, LayerNorm
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
+from .binary_salience import BinarySalience
 
 
 class Novelty(nn.Module):
@@ -20,8 +21,7 @@ class Novelty(nn.Module):
         self.sigmoid_layer = MultiLayerPerceptron(
             1, 1, output_activation="sigmoid")
 
-        self.freeze_salience_module_ = freeze_salience_module
-
+        self.freeze_salience_module = freeze_salience_module
 
     def parameters(self):
         if not self.freeze_salience_module:
@@ -36,10 +36,6 @@ class Novelty(nn.Module):
             yield param
 
     @property
-    def freeze_salience_module(self):
-        return self.freeze_salience_module_
-
-    @property
     def mask_value(self):
         return self.mask_value_ 
 
@@ -50,6 +46,12 @@ class Novelty(nn.Module):
     @property
     def salience_model(self):
         return self.salience_model_
+
+    @salience_model.setter
+    def salience_model(self, new_module):
+        if not isinstance(new_module, BinarySalience):
+            raise Exception("Must be a BinarySalience module.")
+        self.salience_model_ = new_module
 
     # TODO preplace coverage prepate inputs with this method
     def init_identity_mask(self, batch_size, doc_size):
