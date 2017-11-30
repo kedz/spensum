@@ -21,6 +21,8 @@ def write_json(data, path):
     with open(path, "w") as fp:
         for example in data:
             for sent in example:
+                word_count = len(sent["text"].split())
+                sent["word_count"] = word_count
                 if math.isnan(sent["embedding"][0]):
                     sent["embedding"] = [0 for x in sent["embedding"]]
             fp.write(json.dumps(example))
