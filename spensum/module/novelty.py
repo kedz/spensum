@@ -3,7 +3,7 @@ from ntp.modules import MultiLayerPerceptron, LayerNorm
 import torch
 import torch.nn as nn
 from torch.autograd import Variable
-from .binary_salience import BinarySalience
+#from .binary_salience import BinarySalience
 
 
 class Novelty(nn.Module):

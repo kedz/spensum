@@ -1,10 +1,8 @@
-import argparse
 import os
-
-import ntp
-import spen
+import argparse
 
 import torch
+import spensum
 
 
 def main():
@@ -17,41 +15,27 @@ def main():
 
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
-    
+ 
     predictor_data = torch.load(args.predictor)
-    model = predictor_data["model"]
-    text_field = predictor_data["text_field"]
-    feature_field = predictor_data["feature_field"]
-    docset_field = ntp.dataio.field_reader.String("docset_id")
-    doc_field = ntp.dataio.field_reader.String("doc_id")
+    module = predictor_data["module"]
+    module.pretrain()
 
-    fields = [feature_field, text_field, docset_field, doc_field]
-    sequence_field = ntp.dataio.field_reader.Sequence(fields)
-    file_reader = ntp.dataio.file_reader.JSONReader([sequence_field])
-
-    (((features,), (text,), (dsids,), (dids,)), example_lengths), = \
-            file_reader.read(args.data)
-
-    dataset = ntp.dataio.Dataset(
-        (features, example_lengths, "inputs"),
-        (dsids, "docset_id"),
-        (dids, "doc_id"),
-        (text, "text"),
-        batch_size=1,
-        shuffle=False, 
-        gpu=-1)
+    file_reader = predictor_data["file_reader"]
+    dataset = spensum.dataio.read_data(
+        args.data, file_reader, 1, shuffle=False)
+    dataset.length_sort = False
 
     for example in dataset.iter_batch():
-        doc_id = example.doc_id[0][0]
-        docset_id = example.docset_id[0][0]
-        probs = model(example.inputs).data[0]
+        doc_id = example.metadata.doc[0][0]
+        docset_id = example.metadata.docset[0][0]
+        probs = module(example.inputs).data[0]
         _, indices = torch.sort(probs, 0, descending=True)
 
         words = 0
         summary_text = []
         for index in indices:
-            text = example.text[0][index]
-            summary_text.append(example.text[0][index])
+            text = example.metadata.text[0][index]
+            summary_text.append(text)
             words += len(text.split())
             if words >= args.summary_word_length:
                 break
