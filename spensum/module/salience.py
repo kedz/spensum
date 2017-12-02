@@ -1,11 +1,12 @@
 from .spen_module import SpenModule
-from ntp.modules import MultiLayerPerceptron
+from ntp.modules import MultiLayerPerceptron, LayerNorm
 import torch.nn as nn
 
 
 class Salience(SpenModule):
     def __init__(self, embedding_size, hidden_layer_sizes=None, 
                  hidden_layer_activations="tanh", hidden_layer_dropout=0.0,
+                 input_layer_norm=False,
                  mode="spen", mask_value=-1):
         super(Salience, self).__init__(mode=mode, mask_value=mask_value)
 
@@ -16,6 +17,10 @@ class Salience(SpenModule):
             hidden_layer_dropout=hidden_layer_dropout,
             hidden_layer_activations=hidden_layer_activations,
             output_activation="sigmoid")
+        if input_layer_norm:
+            self.layer_norm_ = LayerNorm(embedding_size)
+        else:
+            self.layer_norm_ = None
 
     @property
     def embedding_size(self):
@@ -36,6 +41,9 @@ class Salience(SpenModule):
 
         embedding_flat = inputs.embedding.view(
             batch_size * input_size, self.embedding_size)
+        
+        if self.layer_norm_ is not None:
+            embedding_flat = self.layer_norm_(embedding_flat)
 
         prob_flat = self.mlp_(embedding_flat)
         prob = prob_flat.view(batch_size, input_size).masked_fill(mask, 0)

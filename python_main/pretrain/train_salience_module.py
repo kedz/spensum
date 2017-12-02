@@ -32,6 +32,8 @@ def main():
         required=False)
     parser.add_argument(
         "--hidden-layer-dropout", default=.0, type=float, required=False)
+    parser.add_argument(
+        "--input-layer-norm", default=False, action="store_true")
 
     parser.add_argument(
         "--save-module", required=True, type=str)
@@ -48,6 +50,7 @@ def main():
         hidden_layer_sizes=args.hidden_layer_sizes,
         hidden_layer_activations=args.hidden_layer_activations,
         hidden_layer_dropout=args.hidden_layer_dropout,
+        input_layer_norm=args.input_layer_norm,
         mode="pretrain")
 
     file_reader = spensum.dataio.initialize_sds_reader(args.embedding_size)
