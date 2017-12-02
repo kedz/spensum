@@ -18,7 +18,7 @@ def main():
         os.makedirs(output_dir)
     
     predictor_data = torch.load(args.predictor)
-    module = predictor_data["module"]
+    module = predictor_data["model"]
     module.pretrain()
 
     file_reader = predictor_data["file_reader"]

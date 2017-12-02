@@ -55,7 +55,7 @@ def main():
         if pred_dir != "" and not os.path.exists(pred_dir):
             os.makedirs(pred_dir)
 
-        data = {"module": module, "file_reader": file_reader}
+        data = {"model": pretrained_module, "file_reader": file_reader}
         print("Saving module and file reader...")
         torch.save(data, args.save_predictor)
 
