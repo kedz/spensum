@@ -19,7 +19,8 @@ def main():
     
     predictor_data = torch.load(args.predictor)
     module = predictor_data["model"]
-    module.pretrain()
+    if hasattr(module, "pretrain"):
+        module.pretrain()
 
     file_reader = predictor_data["file_reader"]
     dataset = spensum.dataio.read_data(
