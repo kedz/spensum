@@ -73,13 +73,13 @@ def generate_summary(model):
     print("generating summary with model: {}".format(model))
     if model in ["rand3", "lead3", "position", "word_count", "salience", 
                   "psalience", "coverage", "oracle"]:
-        tr_cmd = pr_tmp.format(
+        tr_cmd = ge_tmp.format(
             part="train", model=model)
         os.system(tr_cmd)
-        va_cmd = pr_tmp.format(
+        va_cmd = ge_tmp.format(
             part="valid", model=model)
         os.system(va_cmd)
-        te_cmd = pr_tmp.format(
+        te_cmd = ge_tmp.format(
             part="test", model=model)
         os.system(te_cmd)
 
@@ -216,8 +216,8 @@ def print_rouge_results():
     train_data = []
     valid_data = []
     models = []
-    for model in ["rand3", "lead3", "position", "word_count", "salience", 
-                  "psalience", "coverage", "oracle"]:
+    for model in ["rand3", "lead3", "word_count", "coverage", "salience", 
+                  "psalience", "position", "oracle"]:
         r = get_rouge_results(model)
         if r is not None:
             train_data.append(
