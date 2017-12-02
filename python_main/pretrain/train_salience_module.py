@@ -14,24 +14,24 @@ def main():
     parser.add_argument(
         "--gpu", default=-1, type=int, required=False)
     parser.add_argument(
-        "--epochs", default=15, type=int, required=False)
+        "--epochs", default=100, type=int, required=False)
     parser.add_argument(
         "--seed", default=83432534, type=int, required=False)
 
     parser.add_argument(
-        "--lr", required=False, default=.1, type=float)
+        "--lr", required=False, default=.01, type=float)
     parser.add_argument(
-        "--batch-size", default=2, type=int, required=False)
+        "--batch-size", default=16, type=int, required=False)
     parser.add_argument(
         "--embedding-size", type=int, required=False, default=300)
     parser.add_argument(
         "--hidden-layer-sizes", nargs="+", default=[100], type=int,
         required=False)
     parser.add_argument(
-        "--hidden-layer-activations", nargs="+", default="tanh", type=str,
+        "--hidden-layer-activations", nargs="+", default="relu", type=str,
         required=False)
     parser.add_argument(
-        "--hidden-layer-dropout", default=.05, type=float, required=False)
+        "--hidden-layer-dropout", default=.0, type=float, required=False)
 
     parser.add_argument(
         "--save-module", required=True, type=str)
