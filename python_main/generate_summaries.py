@@ -17,8 +17,8 @@ def main():
         os.makedirs(args.output_dir)
  
     predictor_data = torch.load(args.predictor)
-    module = predictor_data["module"]
-    module.pretrain()
+    model = predictor_data["model"]
+    model.pretrain()
 
     file_reader = predictor_data["file_reader"]
     dataset = spensum.dataio.read_data(
@@ -28,7 +28,7 @@ def main():
     for example in dataset.iter_batch():
         doc_id = example.metadata.doc[0][0]
         docset_id = example.metadata.docset[0][0]
-        probs = module(example.inputs).data[0]
+        probs = model(example.inputs).data[0]
         _, indices = torch.sort(probs, 0, descending=True)
 
         words = 0
