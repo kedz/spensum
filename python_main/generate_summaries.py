@@ -16,7 +16,8 @@ def main():
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
  
-    predictor_data = torch.load(args.predictor)
+    predictor_data = torch.load(
+        args.predictor, map_location=lambda storage, loc: storage)
     model = predictor_data["model"]
     if hasattr(model, "pretrain"):
         model.pretrain()
