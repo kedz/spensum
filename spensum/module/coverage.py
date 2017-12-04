@@ -18,6 +18,7 @@ class Coverage(SpenModule, CentroidMixIn):
     def __init__(self, embedding_size, group_dropout=0.0, 
                  mode="spen", mask_value=-1):
         super(Coverage, self).__init__(mode=mode, mask_value=mask_value)
+        CentroidMixIn.__init__(self)
        
         self.embedding_size_ = embedding_size
         self.input_layer_norm_ = LayerNorm(embedding_size)
