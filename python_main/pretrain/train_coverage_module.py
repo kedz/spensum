@@ -14,14 +14,14 @@ def main():
     parser.add_argument(
         "--gpu", default=-1, type=int, required=False)
     parser.add_argument(
-        "--epochs", default=15, type=int, required=False)
+        "--epochs", default=50, type=int, required=False)
     parser.add_argument(
         "--seed", default=83432534, type=int, required=False)
 
     parser.add_argument(
-        "--lr", required=False, default=.0001, type=float)
+        "--lr", required=False, default=.01, type=float)
     parser.add_argument(
-        "--batch-size", default=2, type=int, required=False)
+        "--batch-size", default=16, type=int, required=False)
     parser.add_argument(
         "--embedding-size", type=int, required=False, default=300)
     parser.add_argument(
@@ -36,11 +36,15 @@ def main():
 
     random.seed(args.seed)
     torch.manual_seed(args.seed)
+    if args.gpu > -1:
+        torch.cuda.manual_seed(args.seed)
     
     module = spensum.module.Coverage(
         args.embedding_size, 
         group_dropout=args.group_dropout,
         mode="pretrain")
+    if args.gpu > -1:
+        module.cuda(args.gpu)
 
     file_reader = spensum.dataio.initialize_sds_reader(args.embedding_size)
 

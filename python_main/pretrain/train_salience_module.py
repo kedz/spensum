@@ -44,6 +44,8 @@ def main():
 
     random.seed(args.seed)
     torch.manual_seed(args.seed)
+    if args.gpu > -1:
+        torch.cuda.manual_seed(args.seed)
 
     module = spensum.module.Salience(
         args.embedding_size,
@@ -52,6 +54,8 @@ def main():
         hidden_layer_dropout=args.hidden_layer_dropout,
         input_layer_norm=args.input_layer_norm,
         mode="pretrain")
+    if args.gpu > -1:
+        module.cuda(args.gpu)
 
     file_reader = spensum.dataio.initialize_sds_reader(args.embedding_size)
 

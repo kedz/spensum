@@ -4,37 +4,47 @@ from subprocess import check_output
 import json
 import pandas as pd
 
-DATA_DIR = os.path.join("/", "home", "kedz", "projects2018", "spensum", "data")
+CODE_PATH = os.path.dirname(os.path.realpath(__file__))
+DATA_DIR = os.getenv(
+    "SPENSUM_DATA", os.path.expanduser(os.path.join("~", "spensum_data")))
 INPUT_DIR = os.path.join(DATA_DIR, "duc_sds_data")
 MODEL_DIR = os.path.join(DATA_DIR, "duc_sds_models")
 PRED_DIR = os.path.join(DATA_DIR, "duc_sds_predictors")
 LABEL_DIR = os.path.join(DATA_DIR, "duc_sds_labels")
 SUM_DIR = os.path.join(DATA_DIR, "duc_sds_summaries")
 RESULTS_DIR = os.path.join(DATA_DIR, "duc_sds_results")
-ROUGE_PATH = os.path.join("/", "home", "kedz", "projects2018", "spensum", 
-                          "tools", "RELEASE-1.5.5")
+ROUGE_PATH = os.getenv(
+    "ROUGE_PATH", 
+    os.path.expanduser(os.path.join("~", "tools", "RELEASE-1.5.5")))
 
-tr_tmp = "python python_main/pretrain/train_{script}_module.py " \
+tr_tmp = "python " + \
+        os.path.join(CODE_PATH, "python_main", "pretrain", 
+                     "train_{script}_module.py") + " " + \
             "--train " + os.path.join(INPUT_DIR, "duc.sds.train.json") + " " \
             "--valid " + os.path.join(INPUT_DIR, "duc.sds.valid.json") + " " \
             "--save-module " + os.path.join(MODEL_DIR, "{model}.bin") + " " \
-            "--save-predictor " + os.path.join(PRED_DIR, "{pred}.bin")
-pr_tmp = "python python_main/predict_labels.py " \
+            "--save-predictor " + os.path.join(PRED_DIR, "{pred}.bin") + " " \
+            "--gpu {gpu}"
+pr_tmp = "python " + \
+    os.path.join(CODE_PATH, "python_main", "predict_labels.py") + " " \
     "--data " + os.path.join(INPUT_DIR, "duc.sds.{part}.json") + " " \
     "--predictor " + os.path.join(PRED_DIR, "{model}.bin") + " " \
     "--output-path " + os.path.join(LABEL_DIR, "{model}.{part}.tsv")
 
-ge_tmp = "python python_main/generate_summaries.py " \
+ge_tmp = "python " + \
+    os.path.join(CODE_PATH, "python_main", "generate_summaries.py") + " " \
     "--data " + os.path.join(INPUT_DIR, "duc.sds.{part}.json") + " " \
     "--predictor " + os.path.join(PRED_DIR, "{model}.bin") + " " \
     "--output-dir " + os.path.join(SUM_DIR, "{part}", "{model}")
 
-evl_tmp = "python python_main/evaluate_label_prf.py " \
+evl_tmp = "python " + \
+    os.path.join(CODE_PATH, "python_main", "evaluate_label_prf.py") + " " \
     "--system-labels " + os.path.join(LABEL_DIR, "{model}.{part}.tsv") + " " \
     "--system-names {model} " \
     "--reference-labels " + os.path.join(LABEL_DIR, "gold.{part}.tsv")
 
-evg_tmp = "python python_main/evaluate_rouge.py " \
+evg_tmp = "python " + \
+    os.path.join(CODE_PATH, "python_main", "evaluate_rouge.py") + " " \
     "--system-summaries " + os.path.join(SUM_DIR, "{part}", "{model}") \
     + " --system-names {model} " + \
     "--reference-summaries " \
@@ -42,7 +52,7 @@ evg_tmp = "python python_main/evaluate_rouge.py " \
     "--rouge-dir " + ROUGE_PATH
 
 
-def train_model(model):
+def train_model(model, gpu):
     print("training model: {}".format(model))
         
     if model in ["salience", "position", "word_count",
@@ -52,12 +62,13 @@ def train_model(model):
         else:
             script = model
         cmd = tr_tmp.format(
-            script=script, model=model, pred=model)
+            script=script, model=model, pred=model,
+            gpu=gpu)
         os.system(cmd)
 
 def predict_label(model):
     print("predicting labels with model: {}".format(model))
-    if model in ["salience", "position", "word_count"
+    if model in ["salience", "position", "word_count",
                  "psalience", "coverage"]:
         tr_cmd = pr_tmp.format(
             part="train", model=model)
@@ -249,6 +260,7 @@ def main():
         "-m", nargs="+", type=str, default=[], required=False)
     parser.add_argument(
         "--save", action="store_true", default=False)
+    parser.add_argument("--gpu", default=-1, type=int)
 
     args = parser.parse_args()
 
@@ -256,7 +268,7 @@ def main():
     for model in args.m:
         for task in args.t:
             if task == "train":
-                train_model(model)
+                train_model(model, args.gpu)
             elif task == "predict":
                 predict_label(model)
             elif task == "generate":
@@ -265,7 +277,6 @@ def main():
                 eval_labels(model, args.save)
             elif task == "eval_summaries":
                 eval_summaries(model, args.save)
-
 
     if "print_label_results" in args.t:
         print_label_results()

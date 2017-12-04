@@ -36,10 +36,14 @@ def main():
 
     random.seed(args.seed)
     torch.manual_seed(args.seed)
+    if args.gpu > -1:
+        torch.cuda.manual_seed(args.seed)
 
     module = spensum.module.PositionalSalience(
         args.embedding_size, args.num_positions,
         mode="pretrain")
+    if args.gpu > -1:
+        module.cuda(args.gpu)
 
     file_reader = spensum.dataio.initialize_sds_reader(args.embedding_size)
 
