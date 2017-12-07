@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 from abc import ABC, abstractmethod
 
@@ -33,11 +34,17 @@ class SpenModule(nn.Module, ABC):
         else:
             return self.feed_forward(inputs, mask)
 
-
-    @abstractmethod
-    def compute_energy(self, inputs, labels, mask):
-        pass
+    def compute_energy(self, inputs, targets, mask):
+        batch_size = targets.size(0)
+            
+        potential_energy = self.feed_forward(inputs, mask)
+        energy = torch.bmm(
+            targets.view(batch_size, 1, -1),
+            potential_energy.view(batch_size, 1, -1).permute(0,2,1))
+        energy = energy.view(-1, 1)
+        return energy
 
     @abstractmethod
     def feed_forward(self, inputs, mask):
         pass
+

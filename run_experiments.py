@@ -69,7 +69,7 @@ def train_model(model, gpu):
 def predict_label(model):
     print("predicting labels with model: {}".format(model))
     if model in ["salience", "position", "word_count",
-                 "psalience", "coverage"]:
+                 "psalience", "em_salience", "em_salience_position", "coverage"]:
         tr_cmd = pr_tmp.format(
             part="train", model=model)
         os.system(tr_cmd)
@@ -83,7 +83,7 @@ def predict_label(model):
 def generate_summary(model):
     print("generating summary with model: {}".format(model))
     if model in ["rand3", "lead3", "position", "word_count", "salience", 
-                  "psalience", "coverage", "oracle"]:
+                  "psalience", "em_salience", "em_salience_position", "coverage", "oracle"]:
         tr_cmd = ge_tmp.format(
             part="train", model=model)
         os.system(tr_cmd)
@@ -97,7 +97,7 @@ def generate_summary(model):
 def eval_labels(model, save_results):
     print("evaluating labels with model: {}".format(model))
     if model in ["salience", "position", "word_count", "lead3", "rand", 
-                 "psalience", "coverage"]:
+                 "psalience", "em_salience", "em_salience_position", "coverage"]:
         tr_cmd = evl_tmp.format(
             part="train", model=model)
         print("duc sds train")
@@ -123,7 +123,7 @@ def eval_labels(model, save_results):
 def eval_summaries(model, save_results):
     print("evaluating summaries with model: {}".format(model))
     if model in ["salience", "position", "word_count", "lead3", "rand3", 
-                 "psalience", "coverage", "oracle"]:
+                 "psalience", "coverage", "em_salience", "em_salience_position", "oracle"]:
         print("duc sds train")
         tr_cmd = evg_tmp.format(part="train", model=model)
         tr_results = check_output(tr_cmd, shell=True).decode("utf8")
@@ -203,7 +203,7 @@ def print_label_results():
     valid_data = []
     models = []
     for model in ["rand", "lead3", "position", "word_count", "salience", 
-                  "psalience", "coverage"]:
+                  "psalience", "coverage", "em_salience", "em_salience_position"]:
         r = get_label_results(model)
         if r is not None:
             train_data.append(
@@ -228,7 +228,7 @@ def print_rouge_results():
     valid_data = []
     models = []
     for model in ["rand3", "lead3", "word_count", "coverage", "salience", 
-                  "psalience", "position", "oracle"]:
+                  "psalience", "position", "em_salience", "em_salience_position", "oracle"]:
         r = get_rouge_results(model)
         if r is not None:
             train_data.append(

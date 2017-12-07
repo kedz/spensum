@@ -9,9 +9,18 @@ class WordCount(SpenModule):
         self.weight_ = nn.Parameter(torch.rand(1))
         self.bias_ = nn.Parameter(torch.ones(1))
 
-    def compute_energy(self, inputs, labels, mask):
-        raise NotImplementedError(
-            "WordCount module does not yet implement compute_energy")
+    def compute_energy(self, inputs, targets, mask):
+        batch_size = targets.size(0)
+            
+        salience = self.feed_forward(inputs, mask)
+        non_salience = 1 - salience
+        energy = salience.mul(targets.masked_fill(mask, 0)) + \
+            non_salience.mul((1 - targets).masked_fill(mask, 0))
+        # TODO make this a masked mean.
+        avg_energy = energy.mean(1, keepdim=True)
+        return avg_energy
+
+
 
     def feed_forward(self, inputs, mask):
         word_count = inputs.word_count.squeeze(2)

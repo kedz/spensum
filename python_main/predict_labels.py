@@ -9,7 +9,6 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data", type=str, required=True)
     parser.add_argument("--predictor", type=str, required=True)
-    parser.add_argument("--summary-word-length", type=int, default=125)
     parser.add_argument("--output-path", type=str, required=True)
     args = parser.parse_args()
 
@@ -34,8 +33,12 @@ def main():
         for example in dataset.iter_batch():
             doc_id = example.metadata.doc[0][0].lower()
             docset_id = example.metadata.docset[0][0].lower()
-            probs = module(example.inputs).data[0]
-            label_str = ",".join(str(y) for y in probs.gt(.5).tolist())
+            if isinstance(module, spensum.model.EnergyModel):
+                labels = module.search(example.inputs).data[0].long().tolist()
+                label_str = ",".join([str(y) for y in labels])
+            else:
+                probs = module(example.inputs).data[0]
+                label_str = ",".join(str(y) for y in probs.gt(.5).tolist())
             line = "{}.{}\t{}\n".format(docset_id, doc_id, label_str)
             fp.write(line)
         

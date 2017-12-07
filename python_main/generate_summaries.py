@@ -30,7 +30,11 @@ def main():
     for example in dataset.iter_batch():
         doc_id = example.metadata.doc[0][0]
         docset_id = example.metadata.docset[0][0]
-        probs = model(example.inputs).data[0]
+        if isinstance(model, spensum.model.EnergyModel):
+            probs = model.search(example.inputs, round=False).data[0]
+        else:
+            probs = model(example.inputs).data[0]
+        print(probs)
         _, indices = torch.sort(probs, 0, descending=True)
 
         words = 0

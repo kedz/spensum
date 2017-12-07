@@ -13,9 +13,16 @@ class Position(SpenModule):
     def num_positions(self):
         return self.num_positions_
 
-    def compute_energy(self, inputs, labels, mask):
-        raise NotImplementedError(
-            "Position module does not yet implement compute_energy")
+    def compute_energy(self, inputs, targets, mask):
+        batch_size = targets.size(0)
+            
+        on_position = self.feed_forward(inputs, mask)
+        off_position = 1 - on_position
+        energy = on_position.mul(targets.masked_fill(mask, 0)) + \
+            off_position.mul((1 - targets).masked_fill(mask, 0))
+        # TODO make this a masked mean.
+        avg_energy = energy.mean(1, keepdim=True)
+        return avg_energy
 
     def feed_forward(self, inputs, mask):
         position = inputs.position.squeeze(2).clamp(0, self.num_positions)
