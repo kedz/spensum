@@ -5,9 +5,11 @@ import json
 import re
 import random
 
+import torch
 import rouge_papier
 from duc_preprocess import duc2001
 import ntp
+from sklearn.decomposition import TruncatedSVD
 
 
 def create_parent_dir(path):
@@ -28,8 +30,9 @@ def generate_extracts(data, mode, ngram, labels_path, ranks_path):
             summaries = ["\n".join(sent["text"] for sent in sum["sentences"]) 
                          for sum in target]
             
-            ranks = rouge_papier.compute_extract(
-                input_text, summaries, mode=mode, ngram=ngram)
+            ranks, pairwise_ranks = rouge_papier.compute_extract(
+                input_text, summaries, mode=mode, ngram=ngram, 
+                remove_stopwords=True)
             labels = [min(r, 1) for r in ranks]
             id = "{}.{}".format(
                 input[0]["docset_id"].lower(),
@@ -37,8 +40,24 @@ def generate_extracts(data, mode, ngram, labels_path, ranks_path):
 
             lbl_fp.write(json.dumps({"id": id, "labels": labels}))
             lbl_fp.write("\n")
-            rnk_fp.write(json.dumps({"id": id, "ranks": ranks}))
+            rnk_fp.write(json.dumps({"id": id, "ranks": ranks, 
+                                     "pairwise-ranks": pairwise_ranks}))
             rnk_fp.write("\n")
+
+
+
+def generate_pairwise_ranks(data, mode, ngram):
+
+    for input, target in data:
+
+        input_text = [sent["text"] for sent in input]
+        
+        summaries = ["\n".join(sent["text"] for sent in sum["sentences"]) 
+                     for sum in target]
+        
+        ranks = rouge_papier.compute_pairwise_ranks(
+            input_text, summaries, mode=mode, ngram=ngram)
+
 
 def write_summaries(data, output_dir):
     
@@ -80,6 +99,10 @@ def generate_inputs(data, sif_embedding, inputs_path):
                 data["inputs"].append(data_i)
 
             sent_embeddings = sif_embedding.embed_sentences(input_sentences)
+            svd = TruncatedSVD(n_components=3, n_iter=50)
+            svd.fit(sent_embeddings.numpy())
+            data["principal_components"] = svd.components_.tolist()
+
             for i, sent_embed in enumerate(sent_embeddings):
                 data["inputs"][i]["embedding"] = sent_embed.tolist()
             fp.write(json.dumps(data))
@@ -167,10 +190,10 @@ def main():
     pp_duc_2001_sds_path = os.path.join(
         args.spensum_data_path, "duc-sds", "preprocessed-data", "duc2001")
 
-    print("Preprocessing raw duc 2001 sds data ...")
-    duc2001.preprocess_sds(
-        pp_duc_2001_sds_path, nist_data_path=args.duc_2001_data_path, 
-        cnlp_port=9000)
+#    print("Preprocessing raw duc 2001 sds data ...")
+#    duc2001.preprocess_sds(
+#        pp_duc_2001_sds_path, nist_data_path=args.duc_2001_data_path, 
+#        cnlp_port=9000)
 
     print("Loading sif embedding model ...")
     sif_emb = ntp.models.sentence_embedding.SIFEmbedding.from_pretrained()
@@ -187,6 +210,10 @@ def main():
 
     sif_emb.fit_principle_component(all_training_sents)
    
+    sif_path = os.path.join(
+        args.spensum_data_path, duc_sds_data_root, "sif.bin")
+    torch.save(sif_emb, sif_path)
+
     print("Writing training inputs...")
     inputs_train_path = os.path.join(
         duc_sds_data_root, "inputs", "duc.sds.inputs.train.json")
@@ -197,28 +224,30 @@ def main():
         duc_sds_data_root, "inputs", "duc.sds.inputs.valid.json")
     generate_inputs(valid_data, sif_emb, inputs_valid_path)
 
-    print("Writing training summaries...")
-    summaries_train_path = os.path.join(
-        duc_sds_data_root, "summaries", "train", "human_abstracts")
-    write_summaries(train_data, summaries_train_path)
+#    print("Writing training summaries...")
+#    summaries_train_path = os.path.join(
+#        duc_sds_data_root, "summaries", "train", "human_abstracts")
+#    write_summaries(train_data, summaries_train_path)
+    
+#    print("Writing validation summaries...")
+#    summaries_valid_path = os.path.join(
+#        duc_sds_data_root, "summaries", "valid", "human_abstracts")
+#    write_summaries(valid_data, summaries_valid_path)
 
-    print("Writing validation summaries...")
-    summaries_valid_path = os.path.join(
-        duc_sds_data_root, "summaries", "valid", "human_abstracts")
-    write_summaries(valid_data, summaries_valid_path)
-
-    for part, data in [["train", train_data], ["valid", valid_data]]:
-        for mode in ["sequential", "independent"]:
-            for rouge in ["L", 1, 2, 3, 4]:
+    #for mode in ["independent", "sequential"]:
+    for mode in ["sequential"]:
+        for part, data in [["valid", valid_data], ["train", train_data]]:
+        #for mode in ["sequential"]:
+            for rouge in [1]: #2, 3, 4]:
 
                 labels_path = os.path.join(
                     duc_sds_data_root, "labels", 
-                    "duc.sds.labels.{}.rouge-{}.{}.json".format(
+                    "duc.sds.labels.{}.rouge-{}.sw.{}.json".format(
                         "indie" if mode == "independent" else "seq",
                         rouge, part))
                 ranks_path = os.path.join(
                     duc_sds_data_root, "ranks", 
-                    "duc.sds.ranks.{}.rouge-{}.{}.json".format(
+                    "duc.sds.ranks.{}.rouge-{}.sw.{}.json".format(
                         "indie" if mode == "independent" else "seq",
                         rouge, part))
                 
@@ -226,6 +255,7 @@ def main():
                       "for {} data".format(mode, rouge, part))
 
                 generate_extracts(data, mode, rouge, labels_path, ranks_path)
+                #generate_pairwise_ranks(data, mode, rouge)
 
 if __name__ == "__main__":
     main()

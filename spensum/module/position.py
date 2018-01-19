@@ -1,31 +1,45 @@
 from .spen_module import SpenModule
+import torch
+from torch.autograd import Variable
 import torch.nn as nn
 import torch.nn.functional as F
 
 
 class Position(SpenModule):
-    def __init__(self, num_positions, mode="spen", mask_value=-1):
-        super(Position, self).__init__(mode=mode, mask_value=mask_value)
+    def __init__(self, num_positions=50, name="Position", mask_value=-1,
+                 burn_in=0):
+        super(Position, self).__init__(
+            name=name, mask_value=mask_value, burn_in=burn_in)
         self.num_positions_ = num_positions
-        self.embedding = nn.Embedding(num_positions + 1, 1)
+        self.embedding = nn.Embedding(num_positions + 1, 1, padding_idx=0)
     
     @property
     def num_positions(self):
         return self.num_positions_
 
-    def compute_energy(self, inputs, targets, mask):
-        batch_size = targets.size(0)
-            
-        on_position = self.feed_forward(inputs, mask)
-        off_position = 1 - on_position
-        energy = on_position.mul(targets.masked_fill(mask, 0)) + \
-            off_position.mul((1 - targets).masked_fill(mask, 0))
-        # TODO make this a masked mean.
-        avg_energy = energy.mean(1, keepdim=True)
-        return avg_energy
-
-    def feed_forward(self, inputs, mask):
+    def compute_features(self, inputs, inputs_mask=None, targets_mask=None):
         position = inputs.position.squeeze(2).clamp(0, self.num_positions)
         logits = self.embedding(position).squeeze(2)
-        prob = F.sigmoid(logits).masked_fill(mask, 0)
-        return prob
+        return logits
+
+    def forward_pass(self, inputs, features, inputs_mask=None,
+                     targets_mask=None):
+        return features
+
+    def compute_energy(self, inputs, features, targets, inputs_mask=None,
+                       targets_mask=None):
+
+        if targets_mask is None:
+            targets_mask = inputs.embedding[:,:,0].eq(self.mask_value)
+
+        pos_probs = torch.sigmoid(features)
+        pos_energy = -targets * pos_probs
+        neg_probs = 1 - pos_probs
+        neg_energy = -(1 - targets) * neg_probs
+        pointwise_energy = (pos_energy + neg_energy).masked_fill(
+            targets_mask, 0)
+
+        length = Variable(inputs.length.data.float().view(-1, 1))
+        total_energy = pointwise_energy.sum(1, keepdim=True)
+        mean_energy = total_energy / length
+        return mean_energy

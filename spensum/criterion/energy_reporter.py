@@ -11,11 +11,11 @@ class EnergyReporter(object):
 
     def update_pred(self, model):
         for i in range(model.module_energy.size(1)):
-            self.pred_energy[i].extend(model.module_energy[:,i].data.tolist())
+            self.pred_energy[i].extend(model.module_energy[:,i].tolist())
 
     def update_gold(self, model):
         for i in range(model.module_energy.size(1)):
-            self.gold_energy[i].extend(model.module_energy[:,i].data.tolist())
+            self.gold_energy[i].extend(model.module_energy[:,i].tolist())
        
     def reset(self):
         self.pred_output = defaultdict(list)

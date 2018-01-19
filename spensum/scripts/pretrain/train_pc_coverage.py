@@ -82,13 +82,13 @@ def main(args=None):
 
     ntp.set_random_seed(args.seed)
 
-    module = spensum.module.Salience(
-        args.embedding_size,
-        hidden_layer_sizes=args.hidden_layer_sizes,
-        hidden_layer_activations=args.hidden_layer_activations,
-        hidden_layer_dropout=args.hidden_layer_dropout,
-        input_layer_norm=args.input_layer_norm,
-        mode="pretrain")
+    module = spensum.module.PCCoverage(args.embedding_size)
+   #     args.embedding_size,
+    #    hidden_layer_sizes=args.hidden_layer_sizes,
+    #    hidden_layer_activations=args.hidden_layer_activations,
+     #   hidden_layer_dropout=args.hidden_layer_dropout,
+     #   input_layer_norm=args.input_layer_norm,
+    #    mode="pretrain")
     if args.gpu > -1:
         module.cuda(args.gpu)
 
@@ -112,9 +112,9 @@ def main(args=None):
 
     opt = ntp.optimizer.Adam(module.parameters(), lr=args.lr)
     crit = ntp.criterion.BinaryCrossEntropy(
-        mode="prob", weight=weight, mask_value=-1)
+        mode="logit", weight=weight, mask_value=-1)
     crit.add_reporter(
-        ntp.criterion.BinaryFMeasureReporter(mode="prob"))
+        ntp.criterion.BinaryFMeasureReporter(mode="logit"))
     crit.set_selection_criterion("BinaryFMeasureReporter")
 
     train_rouge_results = []

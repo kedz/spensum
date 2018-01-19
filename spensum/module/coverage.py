@@ -75,3 +75,37 @@ class Coverage(SpenModule, CentroidMixIn):
         output_flat = self.sigmoid_layer_(dotsim_flat)
         output = output_flat.view(batch_size, input_size).masked_fill(mask, 0)
         return output
+
+    def extract(self, inputs, metadata, strategy="rank", word_limit=100):
+
+        probs = self.forward(inputs)
+        summaries = []
+        if strategy == "rank":
+            scores, indices = torch.sort(probs, 1, descending=True)
+            for b in range(probs.size(0)):
+                words = 0
+                lines = []
+                for i in range(probs.size(1)):
+                    
+                    idx = indices.data[b][i]
+                    if idx < len(metadata.text[b]):
+                        lines.append(metadata.text[b][idx])
+                        words += inputs.word_count.data[b,idx,0]
+                        if words > word_limit:
+                            break
+                summaries.append("\n".join(lines))
+        elif strategy == "in-order":
+            for b in range(probs.size(0)):
+                words = 0
+                lines = []
+                for i in range(probs.size(1)):
+                    if probs.data[b][i] > .5:
+                        lines.append(metadata.text[b][i])
+                        words += inputs.word_count.data[b,i,0]
+                        if words > word_limit:
+                            break
+                summaries.append("\n".join(lines))
+        else:
+            raise Exception("strategy must be 'rank' or 'in-order'")
+        return summaries
+

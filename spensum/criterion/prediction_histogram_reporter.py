@@ -49,7 +49,7 @@ class PredictionHistogramReporter(object):
                                     rd[self.name]["bin_labels"]):
             pred = str(pred)
             exp = str(exp)
-            label = str(label)
+            label = "{:0.3f}".format(label)
             col_width = max([len(pred), len(exp), len(label)])
             tmp = "{:" + str(col_width) + "s}"
 

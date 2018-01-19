@@ -2,8 +2,8 @@ from .margin_loss_base import MarginLossBase
 
 class SquaredLossAugmentedHingeLoss(MarginLossBase):
 
-    def __init__(self, name="SquaredLossAugmentedHingeLoss"):
-        super(SquaredLossAugmentedHingeLoss, self).__init__(name=name)
+    def __init__(self, weight=None, name="SquaredLossAugmentedHingeLoss"):
+        super(SquaredLossAugmentedHingeLoss, self).__init__(name=name, weight=weight)
 
         self.tot_margin_ = 0
         self.tot_examples_ = 0
