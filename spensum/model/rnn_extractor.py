@@ -67,9 +67,14 @@ class RNNExtractor(nn.Module):
                 lines = []
                 for i in range(probs.size(1)):
                     idx = indices.data[b][i]
+                    if b >= len(metadata.text):
+                      print("DEBUG: b=%d text len=%d" % (b, len(metadata.text)))
+                    elif idx >= len(metadata.text[b]):
+                        print("DEBUG: idx=%d text len2=%d, b=%d" % (idx, len(metadata.text[b]), b))
+                        for j in range(5): print(metadata.text[b][j])
                     lines.append(metadata.text[b][idx])
                     words += inputs.word_count.data[b,idx,0]
-                    if words > word_limit:
+                    if words >= word_limit:
                         break
                 summaries.append("\n".join(lines))
         elif strategy == "in-order":
