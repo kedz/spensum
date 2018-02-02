@@ -16,6 +16,9 @@ def main(args=None):
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--inputs", type=str, required=True)
+    parser.add_argument(
+        "--remove-stopwords", action="store_true", required=False, 
+        default=False)
     parser.add_argument("--reference-summary-dir", type=str, required=True)
 
     args = parser.parse_args(args)
@@ -40,7 +43,8 @@ def main(args=None):
                 data_paths.append([summary_path, ids2refs[example["id"]]])
         config_text = rouge_papier.util.make_simple_config_text(data_paths)
         config_path = manager.create_temp_file(config_text)
-        df = rouge_papier.compute_rouge(config_path, max_ngram=2, lcs=False)
+        df = rouge_papier.compute_rouge(
+            config_path, max_ngram=2, lcs=False, remove_stopwords=args.remove_stopwords)
 
     result = df[-1:]
     result.index = ["lead"]
