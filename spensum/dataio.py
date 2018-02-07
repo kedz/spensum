@@ -8,6 +8,8 @@ def init_duc_sds_input_reader(embedding_size):
     text_field = ntp.dataio.field_reader.String("text")
     pc_field = ntp.dataio.field_reader.DenseVector(
         "principal_components")
+    query_field = ntp.dataio.field_reader.DenseVector(
+        "qembedding", expected_size=embedding_size)
     feature_field = ntp.dataio.field_reader.DenseVector(
         "embedding", expected_size=embedding_size)
     word_count_field = ntp.dataio.field_reader.DenseVector(
@@ -19,7 +21,7 @@ def init_duc_sds_input_reader(embedding_size):
         field="inputs")
 
     inputs_reader = ntp.dataio.file_reader.JSONReader(
-        [id_field, pc_field, inputs_field])
+        [id_field, pc_field, query_field, inputs_field])
 
     return inputs_reader
  
@@ -57,11 +59,12 @@ def read_ranks(ranks_path, rank_reader, fit=False):
 def read_inputs(inputs_path, input_reader, fit=False):
     if fit:
         input_reader.fit_parameters(inputs_path)
-    ((ids,), (pcs,), ((inputs, lengths))) = input_reader.read(inputs_path)
+    ((ids,), (pcs,), (qembeddings,), ((inputs, lengths))) = input_reader.read(inputs_path)
 
     ((texts,), (embeddings,), (word_counts,), (positions,)) = inputs
     return {"ids": ids, "texts": texts, "embeddings": embeddings,
-            "principal_components": pcs,  
+            "principal_components": pcs,
+            "qembeddings": qembeddings,
             "word_counts": word_counts, "positions": positions, 
             "lengths": lengths}
 
@@ -104,11 +107,21 @@ def read_input_label_dataset(inputs_path, labels_path, input_reader,
             ["id", "id"],
             ["text","text"]]
         ]
-    ] 
+    ]
+
+    # YV2018-02-07: concatenate query embeddings to the sentence embeddings
+    # by first repeating them for each sentence
+    qembeddings = inputs["qembeddings"]
+    embeddings = inputs["embeddings"]
+    qsize = qembeddings.size()
+    esize = embeddings.size()
+    qembeddings_t = qembeddings.view(qsize[0],1,qsize[1]).repeat(1,esize[1],1)
+    embeddings = torch.cat([embeddings,qembeddings],2)
+ 
     dataset = ntp.dataio.Dataset(
         (inputs["ids"], "id"),
         (inputs["texts"], "text"),
-        (inputs["embeddings"], inputs["lengths"], "embedding"),
+        (embeddings, inputs["lengths"], "embedding"),
         (inputs["principal_components"], "principal_components"),
         (inputs["word_counts"], inputs["lengths"], "word_count"),
         (inputs["positions"], inputs["lengths"], "position"),

@@ -109,7 +109,7 @@ def main(args=None):
         batch_size=args.batch_size, gpu=args.gpu)
 
     model = spensum.model.RNNExtractor(
-        args.embedding_size, args.rnn_hidden_size, layers=args.rnn_layers)
+        args.embedding_size*2, args.rnn_hidden_size, layers=args.rnn_layers)
     if args.gpu > -1:
         model.cuda(args.gpu)
 
