@@ -1,5 +1,5 @@
 import ntp
-
+import torch
 
 def init_duc_sds_input_reader(embedding_size):
  
@@ -116,7 +116,8 @@ def read_input_label_dataset(inputs_path, labels_path, input_reader,
     qsize = qembeddings.size()
     esize = embeddings.size()
     qembeddings_t = qembeddings.view(qsize[0],1,qsize[1]).repeat(1,esize[1],1)
-    embeddings = torch.cat([embeddings,qembeddings],2)
+    #print("embeddings sizes before concat: %s/%s" % (str(embeddings.size()),str(qembeddings.size())))
+    embeddings = torch.cat([embeddings,qembeddings_t],2)
  
     dataset = ntp.dataio.Dataset(
         (inputs["ids"], "id"),

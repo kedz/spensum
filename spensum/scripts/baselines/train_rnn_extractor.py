@@ -42,6 +42,7 @@ def compute_rouge(model, dataset, reference_dir):
         return df[-1:]
 
 def main(args=None):
+    print("Running query enchanced version")
     parser = argparse.ArgumentParser()
     parser.add_argument("--train-inputs", type=str, required=True)
     parser.add_argument("--train-labels", type=str, required=True)
