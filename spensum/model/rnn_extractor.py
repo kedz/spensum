@@ -3,7 +3,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from spensum.functional import sequence_dropout
-
+from torch.nn.modules.distance import CosineSimilarity as cosim
+import numpy as np
 
 class RNNExtractor(nn.Module):
     def __init__(self, embedding_size, hidden_size, rnn_cell="lstm", layers=1,
@@ -57,11 +58,40 @@ class RNNExtractor(nn.Module):
     def predictor_module(self):
         return self.predictor_module_
 
-    def extract(self, inputs, metadata, strategy="rank", word_limit=100):
+    '''
+    Rescores according to similarity of sentence with the query
+    '''
+    def rescore(self, inputs, probs, bins=[-0.4,-0.1,0.1,0.4], qweight=10.0):
+      batches = inputs.embedding.data.size(0)
+      assert(probs.data.size(0) == batches)
+
+      embedding = inputs.embedding.data
+      # narrow the input tensor
+      sen_embeds = embedding.narrow(2, 0, 300)
+      query_embeds = embedding.narrow(2, 300, 300)
+
+      # compute the cosine similarity
+      cos = cosim(dim=2)
+      cos_scores = cos(sen_embeds, query_embeds)
+
+      # normalize the original scores
+      sums = probs.data.sum(1)
+      divs = sums.repeat(probs.size(1), 1).t()
+      probs.data.div_(divs)
+
+      # apply rescoring
+      for b in range(0, batches):
+        probs.data[b] = probs.data[b] + torch.log(cos_scores[b] + 1.0 + cos.eps)
+
+      # sort to get scores and indices (descending)
+      return torch.sort(probs, 1, descending=True)
+
+    def extract(self, inputs, metadata, strategy="rank", word_limit=100, rescore=False):
         probs = self.forward(inputs)
         summaries = []
         if strategy == "rank":
             scores, indices = torch.sort(probs, 1, descending=True)
+            if rescore: scores, indices = self.rescore(inputs, probs)
             for b in range(probs.size(0)):
                 words = 0
                 lines = []
