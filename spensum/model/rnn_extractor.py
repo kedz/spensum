@@ -61,7 +61,7 @@ class RNNExtractor(nn.Module):
     '''
     Rescores according to similarity of sentence with the query
     '''
-    def rescore(self, inputs, probs, bins=[-0.4,-0.1,0.1,0.4], qweight=10.0):
+    def rescore(self, inputs, probs):
       batches = inputs.embedding.data.size(0)
       assert(probs.data.size(0) == batches)
 
@@ -86,17 +86,34 @@ class RNNExtractor(nn.Module):
       # sort to get scores and indices (descending)
       return torch.sort(probs, 1, descending=True)
 
-    def extract(self, inputs, metadata, strategy="rank", word_limit=100, rescore=False):
+    def get_scores(self, inputs):
+      embedding = inputs.embedding.data
+      # narrow the input tensor
+      sen_embeds = embedding.narrow(2, 0, 300)
+      query_embeds = embedding.narrow(2, 300, 300)
+      cos = cosim(dim=2)
+      cos_scores = cos(sen_embeds, query_embeds)
+      return torch.log(cos_scores + 1.0 + cos.eps)
+
+    def extract(self, inputs, metadata, strategy="rank", word_limit=100, rescore=False, model=None):
+        input_scores = self.get_scores(inputs)
         probs = self.forward(inputs)
+        # if another model is given, we average the scores
+        if model:
+          probs2 = model.forward(inputs)
+          probs = 0.5*probs + 0.5*probs2
         summaries = []
+        scores = []
         if strategy == "rank":
-            scores, indices = torch.sort(probs, 1, descending=True)
-            if rescore: scores, indices = self.rescore(inputs, probs)
+            _, indices = torch.sort(probs, 1, descending=True)
+            if rescore: _, indices = self.rescore(inputs, probs)
             for b in range(probs.size(0)):
                 words = 0
                 lines = []
+                score = 0.0
                 for i in range(probs.size(1)):
                     idx = indices.data[b][i]
+                    score += input_scores[b][idx]
                     if b >= len(metadata.text):
                       print("DEBUG: b=%d text len=%d" % (b, len(metadata.text)))
                     elif idx >= len(metadata.text[b]):
@@ -106,6 +123,8 @@ class RNNExtractor(nn.Module):
                     words += inputs.word_count.data[b,idx,0]
                     if words >= word_limit:
                         break
+                
+                scores.append(score / len(lines))
                 summaries.append("\n".join(lines))
         elif strategy == "in-order":
             for b in range(probs.size(0)):
@@ -117,7 +136,8 @@ class RNNExtractor(nn.Module):
                         words += inputs.word_count.data[b,i,0]
                         if words > word_limit:
                             break
+                scores.append(0.0)
                 summaries.append("\n".join(lines))
         else:
             raise Exception("strategy must be 'rank' or 'in-order'")
-        return summaries
+        return summaries, scores

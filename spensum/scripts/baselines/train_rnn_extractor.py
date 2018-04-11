@@ -5,10 +5,12 @@ import random
 from collections import defaultdict
 
 import spensum
+from spensum.criterion.rouge_score import eval_rouge
 import ntp
 import torch
 import rouge_papier
 import pandas as pd
+import numpy as np
 
 
 def collect_reference_paths(reference_dir):
@@ -18,7 +20,7 @@ def collect_reference_paths(reference_dir):
         ids2refs[id].append(os.path.join(reference_dir, filename))
     return ids2refs
 
-def compute_rouge(model, dataset, reference_dir):
+def compute_rouge(model, dataset, reference_dir, model2=None):
 
     model.eval()
 
@@ -28,8 +30,8 @@ def compute_rouge(model, dataset, reference_dir):
 
         path_data = []
         for batch in dataset.iter_batch():
-            texts = model.extract(batch.inputs, batch.metadata, 
-                                  strategy="rank")
+            texts, scores = model.extract(batch.inputs, batch.metadata, 
+                                  strategy="rank", model=model2)
 
             for id, summary in zip(batch.metadata.id, texts):
                 summary_path = manager.create_temp_file(summary)
@@ -40,6 +42,21 @@ def compute_rouge(model, dataset, reference_dir):
         config_path = manager.create_temp_file(config_text)
         df = rouge_papier.compute_rouge(config_path, max_ngram=2, lcs=False)
         return df[-1:]
+
+def compute_score(model, dataset, reference_dir):
+  
+    scores = []
+    model.eval()
+
+    ids2refs = collect_reference_paths(reference_dir)
+    for batch in dataset.iter_batch():
+        texts, scores = model.extract(batch.inputs, batch.metadata, strategy="rank")
+        for id, summary, score in zip(batch.metadata.id, texts, scores):
+            with open(ids2refs[id][0]) as rf: ref = [s.strip().split(" ") for s in rf.readlines()]
+            rouge1 = eval_rouge([s.split(" ") for s in summary.split("\n")], ref)
+            scores.append(rouge1 + score)
+   
+    return np.sum(scores) / len(scores)
 
 def main(args=None):
     print("Running query enchanced version")
@@ -186,22 +203,18 @@ def main(args=None):
         #    best_epoch, obj))
         #print("")
 
-        valid_rouge = compute_rouge(
+        valid_score = compute_score(
             model, valid_dataset, args.valid_summary_dir)
-        valid_rouge_results.append(valid_rouge)
+        valid_rouge_results.append(valid_score)
 
-        rouge_score = valid_rouge["rouge-2"].values[0]
-        if rouge_score > best_rouge:
-            best_rouge = rouge_score
+        #rouge_score = valid_rouge["rouge-2"].values[0]
+        if valid_score > best_rouge:
+            best_rouge = valid_score
             if args.save_model is not None:
                 print("Saving model!")
                 torch.save(model, args.save_model)
 
-
-    #,
-     #                              save_model=module_save_path)
-    
-    return pd.concat(valid_rouge_results, axis=0) 
+    return valid_rouge_results #pd.concat(valid_rouge_results, axis=0) 
     
     
     #exit()
