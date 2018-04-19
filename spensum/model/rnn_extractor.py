@@ -5,13 +5,12 @@ import torch.nn.functional as F
 from spensum.functional import sequence_dropout
 from torch.nn.modules.distance import CosineSimilarity as cosim
 import numpy as np
+import os
 
 class RNNExtractor(nn.Module):
     def __init__(self, embedding_size, hidden_size, rnn_cell="lstm", layers=1,
                  bidirectional=True, merge_mode="concat"):
         
-        #, input_module, encoder_module, predictor_module,
-        #         pad_value=0):
         super(RNNExtractor, self).__init__()
 
         self.rnn_ = ntp.modules.EncoderRNN(
@@ -19,13 +18,8 @@ class RNNExtractor(nn.Module):
             bidirectional=bidirectional, merge_mode=merge_mode)
         
         self.predictor_module_ = ntp.modules.MultiLayerPerceptron(
-            self.rnn.output_size, 1, output_activation="sigmoid") 
-        #self.input_module_ = input_module
-        #self.encoder_module_ = encoder_module
-        #self.predictor_module_ = predictor_module
-        #self.pad_value_ = pad_value
-
-
+            self.rnn.output_size, 1, output_activation="sigmoid")
+   
     def forward(self, inputs, mask=None):
 
         input_embeddings = inputs.embedding.transpose(1, 0)
@@ -104,40 +98,31 @@ class RNNExtractor(nn.Module):
           probs = 0.5*probs + 0.5*probs2
         summaries = []
         scores = []
-        if strategy == "rank":
-            _, indices = torch.sort(probs, 1, descending=True)
-            if rescore: _, indices = self.rescore(inputs, probs)
-            for b in range(probs.size(0)):
-                words = 0
-                lines = []
-                score = 0.0
-                for i in range(probs.size(1)):
-                    idx = indices.data[b][i]
-                    score += input_scores[b][idx]
-                    if b >= len(metadata.text):
-                      print("DEBUG: b=%d text len=%d" % (b, len(metadata.text)))
-                    elif idx >= len(metadata.text[b]):
-                        print("DEBUG: idx=%d text len2=%d, b=%d" % (idx, len(metadata.text[b]), b))
-                        for j in range(5): print(metadata.text[b][j])
-                    lines.append(metadata.text[b][idx])
-                    words += inputs.word_count.data[b,idx,0]
-                    if words >= word_limit:
-                        break
+        _, indices = torch.sort(probs, 1, descending=True)
+        if rescore: _, indices = self.rescore(inputs, probs)
+        if strategy == "rand":
+          indices.data += torch.Tensor(indices.size(0), indices.size(1)).uniform_(0, 10000).long()
+          _, indices = torch.sort(indices, 1, descending=False)
+        if strategy == "lead3":
+          for b in range(indices.size(0)):
+            for i in range(indices.size(1)):
+              indices.data[b][i] = i
+
+        for b in range(probs.size(0)):
+          words = 0
+          lines = []
+          score = 0.0
+          for i in range(probs.size(1)):
+            idx = indices.data[b][i]
+            candidate = metadata.text[b][idx]
+            sen_words = len(candidate.split(" "))
+            if words + sen_words <= word_limit:
+              lines.append(candidate)
+              score += input_scores[b][idx]
+              words += sen_words
+            if words == word_limit:
+              break
                 
-                scores.append(score / len(lines))
-                summaries.append("\n".join(lines))
-        elif strategy == "in-order":
-            for b in range(probs.size(0)):
-                words = 0
-                lines = []
-                for i in range(probs.size(1)):
-                    if probs.data[b][i] > .5:
-                        lines.append(metadata.text[b][i])
-                        words += inputs.word_count.data[b,i,0]
-                        if words > word_limit:
-                            break
-                scores.append(0.0)
-                summaries.append("\n".join(lines))
-        else:
-            raise Exception("strategy must be 'rank' or 'in-order'")
+          scores.append(score / len(lines))
+          summaries.append("\n".join(lines))
         return summaries, scores
