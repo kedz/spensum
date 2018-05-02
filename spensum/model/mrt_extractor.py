@@ -8,17 +8,21 @@ import numpy as np
 from spensum.criterion.rouge_score import eval_rouge
 from spensum.model.rnn_extractor import RNNExtractor
 import ntp
+import math
 
 class MRTExtractor(RNNExtractor):
 
-  def __init__(self, embedding_size, hidden_size, refs_dict, num_samples = 5, budget = 3, rnn_cell="lstm", layers=1, bidirectional=True, merge_mode="concat"):
-    super(MRTExtractor, self).__init__(embedding_size, hidden_size, rnn_cell="lstm", layers=1,
-                 bidirectional=True, merge_mode="concat")
+  def __init__(self, embedding_size, hidden_size, refs_dict, num_samples = 5, budget = 3, alpha = 2.0, rnn_cell="lstm", layers=1, bidirectional=True, merge_mode="concat", gamma = 0.96, stopwords = set()):
+    super(MRTExtractor, self).__init__(embedding_size, hidden_size, rnn_cell=rnn_cell, layers=layers,
+                 bidirectional=bidirectional, merge_mode=merge_mode)
     self.num_samples = num_samples
     self.budget = budget
     self.refs_dict = refs_dict
+    self.alpha = alpha
+    self.gamma = gamma
+    self.stopwords = stopwords
 
-  def get_risk(self, samples, ids, texts):
+  def get_risk(self, samples, ids, texts, stopwords):
         """
         Selects the first *budget* sentences that are equal to 1 and computes
         the total risk for that selection.
@@ -34,17 +38,17 @@ class MRTExtractor(RNNExtractor):
 
         for b in range(batch_size):
             for s in range(sample_size):
-                summary_size = 0
+                count = 0 
                 tokens = []
                 for sen in range(seq_size):
                     if samples.data[b, s, sen] == 1 and sen < len(texts[b]):
-                        tokens.extend(texts[b][sen].split(" "))
-                        sample_risk[b, s]
-                        summary_size += 1
-                    if summary_size > self.budget:
-                        break
+                        tmp = texts[b][sen].split(" ")
+                        count += len(tmp)
+                        if len(tokens) + len(tmp) <= self.budget:
+                          tokens.extend(tmp)
                 # this is the computation of risk based on rouge
-                sample_risk[b, s] = 1 - eval_rouge(self.refs_dict[ids[b]],[tokens])
+                penalty = math.pow(self.gamma,max(1.0,count-self.budget))
+                sample_risk[b, s] = 1.0 - eval_rouge([tokens],[self.refs_dict[ids[b]]],self.stopwords)*penalty
         return Variable(sample_risk)
 
   def make_mask(self, lengths):
@@ -56,7 +60,7 @@ class MRTExtractor(RNNExtractor):
             mask[i,l:].fill_(1)
     return Variable(mask.byte())
 
-  def forward(self, inputs, metadata):
+  def forward_mrt(self, inputs, metadata):
     logits = super(MRTExtractor, self).forward(inputs)
     lengths = inputs.length
     mask = self.make_mask(lengths)
@@ -101,7 +105,7 @@ class MRTExtractor(RNNExtractor):
     #  Q(y^(i)|x) =  -----------------------------------------
     #                  sum_j=1^k exp(logP(y^(j)|x))
     #
-    q_logits = sample_log_likelihood / lengths.float().view(-1, 1)
+    q_logits = sample_log_likelihood / lengths.float().view(-1, 1) * self.alpha
     q_probs = F.softmax(q_logits, 1)
 
     # Here is where you would call your rouge function and return 1 - rouge

@@ -114,6 +114,7 @@ class RNNExtractor(nn.Module):
           score = 0.0
           for i in range(probs.size(1)):
             idx = indices.data[b][i]
+            if idx >= len(metadata.text[b]): continue
             candidate = metadata.text[b][idx]
             sen_words = len(candidate.split(" "))
             if words + sen_words <= word_limit:
@@ -123,6 +124,6 @@ class RNNExtractor(nn.Module):
             if words == word_limit:
               break
                 
-          scores.append(score / len(lines))
+          scores.append(score / (len(lines) + 0.000001))
           summaries.append("\n".join(lines))
         return summaries, scores
