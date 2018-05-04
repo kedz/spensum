@@ -89,28 +89,40 @@ def main(args=None):
   stopwords = set([word.strip() for word in open(args.stopwords).readlines()])
 
   try:
-    model = torch.load(args.pretrained, map_location=lambda storage, loc: storage)
+    pretrained = torch.load(args.pretrained, map_location=lambda storage, loc: storage)
     print("loaded pretrained model from %s successfully" % args.pretrained)
   except:
-    model = MRTExtractor(args.embedding_size*2, args.rnn_hidden_size, 
-                       layers=args.rnn_layers, refs_dict=refs_dict, 
-                       budget=args.budget, num_samples=args.num_samples, 
-                       alpha=args.alpha, gamma=args.gamma, stopwords=stopwords)
+    pretrained = None
     print("failed to load pretrained model from %s, created a new model from scratch" % args.pretrained)
 
-  if args.gpu > -1:
-    model.cuda(args.gpu)
+  model = MRTExtractor(args.embedding_size*2, args.rnn_hidden_size, 
+                       layers=args.rnn_layers, refs_dict=refs_dict, 
+                       budget=args.budget, num_samples=args.num_samples, 
+                       alpha=args.alpha, gamma=args.gamma, stopwords=stopwords, model=pretrained)
 
-  optim = ntp.optimizer.Adam(model.parameters(), lr=args.lr)
+  if args.gpu > -1:
+    model.model.cuda(args.gpu)
+
+  optim = ntp.optimizer.Adam(model.model.parameters(), lr=args.lr)
   max_steps = math.ceil(train_dataset.size / train_dataset.batch_size)
   best_rouge = 0.0
 
   for epoch in range(1, args.epochs + 1):
     print("epoch %s" % epoch)
-    
+   
+    # get real rouge
+    valid_rouge = compute_rouge(model.model, valid_dataset, args.valid_summary_dir)
+    rouge_score1 = valid_rouge["rouge-1"].values[0]
+    rouge_score2 = valid_rouge["rouge-2"].values[0]
+    if rouge_score2 > best_rouge:
+      best_rouge = rouge_score2
+      if args.save_model is not None:
+        print("Saving model!")
+        torch.save(model.model, args.save_model)
+ 
     # training
     avg_train_expected_risks = []
-    model.train()
+    model.model.train()
     for step, batch in enumerate(train_dataset.iter_batch(), 1):
       optim.zero_grad()
       avg_expected_risk = model.forward_mrt(batch.inputs, batch.metadata)
@@ -120,21 +132,11 @@ def main(args=None):
     
     # evaluation
     avg_test_expected_risks = []
-    model.eval()
+    model.model.eval()
     for step, batch in enumerate(valid_dataset.iter_batch(), 1):
       avg_expected_risk = model.forward_mrt(batch.inputs, batch.metadata)
       avg_test_expected_risks.append(avg_expected_risk.data[0])
    
-    # get real rouge
-    valid_rouge = compute_rouge(model, valid_dataset, args.valid_summary_dir)
-    rouge_score1 = valid_rouge["rouge-1"].values[0]
-    rouge_score2 = valid_rouge["rouge-2"].values[0]
-    if rouge_score2 > best_rouge:
-      best_rouge = rouge_score2
-      if args.save_model is not None:
-        print("Saving model!")
-        torch.save(model, args.save_model)
- 
     print("E[R]= train: %f, test: %f, rouge1=%f, rouge2=%f" % (np.mean(avg_train_expected_risks),np.mean(avg_test_expected_risks),rouge_score1,rouge_score2))
     sys.stdout.flush()
 if __name__ == "__main__":
